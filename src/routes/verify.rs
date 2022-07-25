@@ -7,6 +7,8 @@ use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::fmt;
 
+use log::error;
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Claims {
     email: String,
@@ -36,11 +38,11 @@ fn verify_token(
     token: &str,
     secret: &[u8],
     granted_emails: &Vec<String>,
-) -> Result<(), VerifyError> {
+) -> Result<String, VerifyError> {
     match decode::<Claims>(
         &token,
         &DecodingKey::from_secret(&secret),
-        &Validation::new(Algorithm::RS256),
+        &Validation::new(Algorithm::HS256),
     ) {
         Err(e) => match e.kind() {
             ErrorKind::ExpiredSignature => Err(VerifyError::Expired),
@@ -51,7 +53,7 @@ fn verify_token(
                 return Err(VerifyError::NotGrunted);
             }
 
-            return Ok(());
+            return Ok(decoded.claims.email);
         }
     }
 }
@@ -61,13 +63,18 @@ pub struct VerifyRequest {
     token: String,
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+struct VerifyResponse {
+    email: String,
+}
+
 #[post("/verify")]
 pub async fn verify(req: Json<VerifyRequest>, cfg: Data<Config>) -> HttpResponse {
     match verify_token(&req.token, &cfg.secret.as_bytes(), &cfg.granted_emails) {
-        Err(e) => HttpResponse::Unauthorized()
-            .body(format!("{err}", err = e))
-            .await
-            .unwrap(),
-        Ok(_) => HttpResponse::Ok().body(""),
+        Err(e) => {
+            error!("{}", e);
+            return HttpResponse::Unauthorized().body(format!("{err}", err = e));
+        }
+        Ok(email) => HttpResponse::Ok().json(VerifyResponse { email }),
     }
 }

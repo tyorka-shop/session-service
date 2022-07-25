@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use rand::{distributions::Alphanumeric, Rng}; // 0.8
+use rand::{distributions::Alphanumeric, Rng};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Config {
@@ -7,6 +7,8 @@ pub struct Config {
   pub secret: String,
   pub granted_emails: Vec<String>,
   pub token_lifetime: i64,
+  pub allowed_origins: Vec<String>,
+  pub domain: String,
 }
 
 impl ::std::default::Default for Config {
@@ -16,6 +18,8 @@ impl ::std::default::Default for Config {
       secret: rand::thread_rng().sample_iter(&Alphanumeric).take(256).map(char::from).collect(),
       granted_emails: vec![],
       token_lifetime: 3600,
+      allowed_origins: ["http://localhost:3000".to_string()].to_vec(),
+      domain: "localhost:3002".to_string(),
     }
   }
 }
