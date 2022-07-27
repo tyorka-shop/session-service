@@ -137,7 +137,8 @@ async fn get_decoding_key<'a>(token: &'a str) -> Result<DecodingKey<'a>, LoginEr
 
     let cert = match cert {
         Ok(cert) => cert,
-        Err(_) => {
+        Err(e) => {
+            error!("{}", e);
             return Err(LoginError::DownloadCerts);
         }
     };
