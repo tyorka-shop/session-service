@@ -5,13 +5,13 @@ use rand::{distributions::Alphanumeric, Rng};
 pub struct Config {
   pub port: String,
   pub secret: String,
-  pub granted_emails: Vec<String>,
-  pub token_lifetime: i64,
-  pub allowed_origins: Vec<String>,
   pub domain: String,
+  pub token_lifetime: i64,
+  pub granted_emails: Vec<String>,
+  pub allowed_origins: Vec<String>,
 }
 
-impl ::std::default::Default for Config {
+impl Default for Config {
   fn default() -> Self {
     Self {
       port: "3002".into(),
@@ -24,6 +24,6 @@ impl ::std::default::Default for Config {
   }
 }
 
-pub fn load() -> Config {
-  confy::load::<Config>("tyorka-session-service").unwrap()
+pub fn load(name: &str) -> Config {
+  confy::load::<Config>(name).unwrap()
 }

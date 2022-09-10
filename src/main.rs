@@ -1,30 +1,17 @@
-#[macro_use]
-extern crate actix_web;
-
-use std::io;
-
-use actix_web::web::Data;
-use actix_web::{middleware, App, HttpServer};
-
+mod cache;
 mod cert;
-mod config;
-mod routes;
+mod google_auth;
+mod token;
+mod grpc;
+mod web;
 
-#[actix_web::main]
-async fn main() -> io::Result<()> {
+#[tokio::main]
+async fn main() {
     env_logger::init();
-    let cfg = config::load();
-    let port = cfg.port.clone();
+    let cfg = config::load("tyorka-session-service");
 
-    HttpServer::new(move || {
-        App::new()
-            .wrap(middleware::Logger::default())
-            .app_data(Data::new(cfg.clone()))
-            .service(routes::health::health)
-            .service(routes::verify::verify)
-            .service(routes::login::login)
-    })
-    .bind(format!("0.0.0.0:{port}", port = port))?
-    .run()
-    .await
+    let web = web::make_server(cfg.clone());
+    let grpc = grpc::make_server(cfg.clone());
+
+    let (_, _) = tokio::join!(web, grpc);
 }

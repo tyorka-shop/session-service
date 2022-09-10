@@ -1,22 +1,44 @@
-use crate::config::Config;
-use actix_web::web::{Data, Json};
-use actix_web::HttpResponse;
-use jsonwebtoken::errors::ErrorKind;
-use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
+use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation, encode, EncodingKey, Header, errors::ErrorKind};
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::fmt;
-
-use log::error;
+use std::result::Result;
+use time::ext::NumericalDuration;
+use time::OffsetDateTime;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Claims {
-    email: String,
-    exp: u64,
+    pub email: String,
+    pub exp: i64,
+}
+
+pub fn create(
+    email: &str,
+    secret: &[u8],
+    token_lifetime: i64,
+) -> Result<String, Box<dyn std::error::Error>> {
+    let expiration = OffsetDateTime::now_utc()
+        .checked_add(token_lifetime.seconds())
+        .unwrap()
+        .unix_timestamp();
+
+    let claims = Claims {
+        email: email.to_string(),
+        exp: expiration,
+    };
+
+    match encode(
+        &Header::new(Algorithm::HS256),
+        &claims,
+        &EncodingKey::from_secret(secret),
+    ) {
+        Ok(token) => Ok(token),
+        Err(e) => return Err(e.into()),
+    }
 }
 
 #[derive(Debug)]
-enum VerifyError {
+pub enum VerifyError {
     Parse,
     Expired,
     NotGrunted,
@@ -34,7 +56,7 @@ impl fmt::Display for VerifyError {
     }
 }
 
-fn verify_token(
+pub fn verify(
     token: &str,
     secret: &[u8],
     granted_emails: &Vec<String>,
@@ -55,26 +77,5 @@ fn verify_token(
 
             return Ok(decoded.claims.email);
         }
-    }
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct VerifyRequest {
-    token: String,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-struct VerifyResponse {
-    email: String,
-}
-
-#[post("/verify")]
-pub async fn verify(req: Json<VerifyRequest>, cfg: Data<Config>) -> HttpResponse {
-    match verify_token(&req.token, &cfg.secret.as_bytes(), &cfg.granted_emails) {
-        Err(e) => {
-            error!("{}", e);
-            return HttpResponse::Unauthorized().body(format!("{err}", err = e));
-        }
-        Ok(email) => HttpResponse::Ok().json(VerifyResponse { email }),
     }
 }

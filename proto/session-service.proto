@@ -1,0 +1,21 @@
+syntax = "proto3";
+package session_service;
+
+service SessionService {
+  rpc verify (VerifyRequest) returns (VerifyResponse);
+}
+
+message VerifyRequest {
+  string token = 1;
+}
+
+enum TokenStatus {
+  OK = 0;
+  EXPIRED = 1;
+  NOT_GRUNTED = 2;
+  INVALID = 3;
+}
+
+message VerifyResponse {
+  TokenStatus status = 1;
+}
