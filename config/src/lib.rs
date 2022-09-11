@@ -4,6 +4,7 @@ use rand::{distributions::Alphanumeric, Rng};
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Config {
   pub port: String,
+  pub grpc_port: String,
   pub secret: String,
   pub domain: String,
   pub token_lifetime: i64,
@@ -15,6 +16,7 @@ impl Default for Config {
   fn default() -> Self {
     Self {
       port: "3002".into(),
+      grpc_port: "50051".into(),
       secret: rand::thread_rng().sample_iter(&Alphanumeric).take(256).map(char::from).collect(),
       granted_emails: vec![],
       token_lifetime: 3600,

@@ -8,6 +8,7 @@ jsonwebtoken = "=7.2"
 serde = {version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 env_logger = "0.7.1"
+session_service_proto = {path = "grpc"}
 config = {path = "./config"}
 log = "0.4.17"
 reqwest = { version = "0.11", features = ["json"] }
@@ -26,4 +27,4 @@ tonic-reflection = "0.5.0"
 tonic-build = {version = "0.8", features = ["prost"]}
 
 [workspace]
-members = [".", "config"]
+members = ["config", "grpc", "."]

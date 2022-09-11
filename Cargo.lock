@@ -1363,6 +1363,7 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_json",
+ "session_service_proto",
  "time 0.3.14",
  "tokio",
  "tonic",
@@ -1370,6 +1371,19 @@ dependencies = [
  "tonic-reflection",
  "url",
  "warp",
+]
+
+[[package]]
+name = "session_service_proto"
+version = "0.1.0"
+dependencies = [
+ "env_logger",
+ "log",
+ "prost",
+ "tokio",
+ "tonic",
+ "tonic-build",
+ "tonic-reflection",
 ]
 
 [[package]]

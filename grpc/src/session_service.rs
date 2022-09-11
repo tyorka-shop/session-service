@@ -7,6 +7,8 @@ pub struct VerifyRequest {
 pub struct VerifyResponse {
     #[prost(enumeration="TokenStatus", tag="1")]
     pub status: i32,
+    #[prost(string, tag="2")]
+    pub email: ::prost::alloc::string::String,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]

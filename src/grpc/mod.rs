@@ -1,25 +1,23 @@
-use std::net::SocketAddr;
+use std::net::{SocketAddr, Ipv4Addr};
 
 use log::info;
 use tonic::transport::Server;
 use warp::Future;
 
-use self::session_service_impl::{SessionService, SessionServiceServer};
+use session_service_impl::{SessionService};
+use session_service_proto::{server::{SessionServiceServer}, FILE_DESCRIPTOR_SET};
 
-pub mod session_service;
 pub mod session_service_impl;
-
-const FILE_DESCRIPTOR_SET: &[u8] = include_bytes!("description.bin");
 
 pub fn make_server(
     cfg: config::Config,
 ) -> impl Future<Output = Result<(), tonic::transport::Error>> {
     let session_service = SessionService {
-        secret: cfg.secret.clone(),
-        granted_emails: cfg.granted_emails.clone(),
+        secret: cfg.secret,
+        granted_emails: cfg.granted_emails,
     };
 
-    let grpc_addr = "127.0.0.1:50051".parse::<SocketAddr>().unwrap();
+    let addr = SocketAddr::new(Ipv4Addr::LOCALHOST.into(), cfg.grpc_port.parse::<u16>().unwrap());
 
     let reflection_service = tonic_reflection::server::Builder::configure()
         .register_encoded_file_descriptor_set(FILE_DESCRIPTOR_SET)
@@ -31,13 +29,13 @@ pub fn make_server(
     Server::builder()
         .add_service(SessionServiceServer::new(session_service))
         .add_service(reflection_service)
-        .serve(grpc_addr)
+        .serve(addr)
 }
 
 #[cfg(test)]
 mod test_verify {
-    use super::session_service::session_service_server::SessionService as SSI;
-    use super::session_service::{TokenStatus, VerifyRequest};
+    
+    use session_service_proto::{TokenStatus, VerifyRequest, server::SessionService as SSI};
     use super::session_service_impl::SessionService;
     use tonic::Request;
 

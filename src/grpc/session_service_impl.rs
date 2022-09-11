@@ -1,9 +1,6 @@
-use super::session_service::session_service_server;
-use super::session_service::{TokenStatus, VerifyRequest, VerifyResponse};
-use crate::token::{VerifyError};
+use crate::token::VerifyError;
+use session_service_proto::{TokenStatus, VerifyRequest, VerifyResponse};
 use tonic::{Request, Response, Status};
-
-pub use super::session_service::session_service_server::SessionServiceServer;
 
 #[derive(Debug)]
 pub struct SessionService {
@@ -12,23 +9,25 @@ pub struct SessionService {
 }
 
 #[tonic::async_trait]
-impl session_service_server::SessionService for SessionService {
+impl session_service_proto::server::SessionService for SessionService {
     async fn verify(
         &self,
         request: Request<VerifyRequest>,
     ) -> Result<Response<VerifyResponse>, Status> {
         let token = request.into_inner().token;
-        let status = match crate::token::verify(&token, &self.secret.as_bytes(), &self.granted_emails) {
-            Ok(_) => TokenStatus::Ok,
-            Err(e) => match e {
-                VerifyError::Expired => TokenStatus::Expired,
-                VerifyError::NotGrunted => TokenStatus::NotGrunted,
-                _ => TokenStatus::Invalid,
-            },
-        };
+        let (status, email) =
+            match crate::token::verify(&token, &self.secret.as_bytes(), &self.granted_emails) {
+                Ok(email) => (TokenStatus::Ok, Some(email)),
+                Err(e) => match e {
+                    VerifyError::Expired => (TokenStatus::Expired, None),
+                    VerifyError::NotGrunted => (TokenStatus::NotGrunted, None),
+                    _ => (TokenStatus::Invalid, None),
+                },
+            };
 
-        Ok(tonic::Response::new(VerifyResponse {
+        Ok(Response::new(VerifyResponse {
             status: status as i32,
+            email: email.unwrap_or_default(),
         }))
     }
 }
