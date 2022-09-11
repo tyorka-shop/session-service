@@ -3,7 +3,7 @@ name: build
 on: [push]
 
 jobs:
-  publish-hello-world-image:
+  prod:
     runs-on: ubuntu-latest
 
     steps:
