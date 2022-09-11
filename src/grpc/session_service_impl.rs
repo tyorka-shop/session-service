@@ -1,5 +1,5 @@
 use crate::token::VerifyError;
-use session_service_proto::{TokenStatus, VerifyRequest, VerifyResponse};
+use session_service_grpc::{TokenStatus, VerifyRequest, VerifyResponse};
 use tonic::{Request, Response, Status};
 
 #[derive(Debug)]
@@ -9,7 +9,7 @@ pub struct SessionService {
 }
 
 #[tonic::async_trait]
-impl session_service_proto::server::SessionService for SessionService {
+impl session_service_grpc::server::SessionService for SessionService {
     async fn verify(
         &self,
         request: Request<VerifyRequest>,

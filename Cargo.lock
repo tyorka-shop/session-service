@@ -1358,24 +1358,22 @@ dependencies = [
  "jsonwebtoken",
  "lazy_static",
  "log",
- "prost",
  "regex",
  "reqwest",
  "serde",
  "serde_json",
- "session_service_proto",
+ "session_service_grpc",
  "time 0.3.14",
  "tokio",
  "tonic",
- "tonic-build",
- "tonic-reflection",
  "url",
  "warp",
 ]
 
 [[package]]
-name = "session_service_proto"
+name = "session_service_grpc"
 version = "0.1.0"
+source = "git+https://github.com/tyorka-shop/session-service-grpc.git#178b309c29de1dde7b9ab9c16c2d38764222aefd"
 dependencies = [
  "env_logger",
  "log",

@@ -1,11 +1,11 @@
-use std::net::{SocketAddr, Ipv4Addr};
+use std::net::{Ipv4Addr, SocketAddr};
 
 use log::info;
 use tonic::transport::Server;
 use warp::Future;
 
-use session_service_impl::{SessionService};
-use session_service_proto::{server::{SessionServiceServer}, FILE_DESCRIPTOR_SET};
+use session_service_grpc::{make_reflection_service, server::SessionServiceServer};
+use session_service_impl::SessionService;
 
 pub mod session_service_impl;
 
@@ -17,26 +17,24 @@ pub fn make_server(
         granted_emails: cfg.granted_emails,
     };
 
-    let addr = SocketAddr::new(Ipv4Addr::LOCALHOST.into(), cfg.grpc_port.parse::<u16>().unwrap());
-
-    let reflection_service = tonic_reflection::server::Builder::configure()
-        .register_encoded_file_descriptor_set(FILE_DESCRIPTOR_SET)
-        .build()
-        .unwrap();
+    let addr = SocketAddr::new(
+        Ipv4Addr::LOCALHOST.into(),
+        cfg.grpc_port.parse::<u16>().unwrap(),
+    );
 
     info!("GRPC listening on 50051");
 
     Server::builder()
+        .add_service(make_reflection_service())
         .add_service(SessionServiceServer::new(session_service))
-        .add_service(reflection_service)
         .serve(addr)
 }
 
 #[cfg(test)]
 mod test_verify {
-    
-    use session_service_proto::{TokenStatus, VerifyRequest, server::SessionService as SSI};
+
     use super::session_service_impl::SessionService;
+    use session_service_grpc::{server::SessionService as SSI, TokenStatus, VerifyRequest};
     use tonic::Request;
 
     const EMAIL: &str = "john@doe.com";

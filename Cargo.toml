@@ -8,7 +8,6 @@ jsonwebtoken = "=7.2"
 serde = {version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 env_logger = "0.7.1"
-session_service_proto = {path = "grpc"}
 config = {path = "./config"}
 log = "0.4.17"
 reqwest = { version = "0.11", features = ["json"] }
@@ -17,14 +16,10 @@ cookie = "0.16"
 url = "2.2.2"
 lazy_static = "1.4.0"
 regex = "1.6.0"
-tonic = { version = "0.8.1", features = ["codegen", "prost"] }
-prost = "0.11"
+tonic = { version = "0.8.1" }
 warp = "0.3.2"
 tokio = { version = "1.21.0", features = ["full"] }
-tonic-reflection = "0.5.0"
-
-[build-dependencies]
-tonic-build = {version = "0.8", features = ["prost"]}
+session_service_grpc = {git = "https://github.com/tyorka-shop/session-service-grpc.git"}
 
 [workspace]
-members = ["config", "grpc", "."]
+members = ["config", "."]
