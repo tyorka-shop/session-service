@@ -1,0 +1,22 @@
+name: build
+
+on: [push]
+
+jobs:
+  publish-hello-world-image:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Login to registry
+      uses: docker/login-action@v1
+      with:
+        registry: ghcr.io
+        username: tyorka-shop
+        password: ${{ secrets.PAT }}
+    - name: Build
+      run: docker build -t ghcr.io/tyorka-shop/session-service:latest .
+    
+    - name: Publish
+      run: docker push ghcr.io/tyorka-shop/session-service:latest
