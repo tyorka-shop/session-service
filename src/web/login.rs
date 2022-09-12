@@ -11,6 +11,8 @@ use warp::http::Error;
 
 use log::error;
 
+use crate::google_auth::GoogleAuth;
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct LoginRequest {
     credential: String,
@@ -26,6 +28,7 @@ pub async fn login(
     query: QueryParameters,
     req: LoginRequest,
     cfg: Config,
+    google_auth: GoogleAuth
 ) -> Result<impl warp::Reply, Error> {
     if !is_allowd_origin(&query.returnTo, &cfg.allowed_origins) {
         error!("Origin not allowed: {}", query.returnTo);
@@ -34,7 +37,7 @@ pub async fn login(
             .body("Origin not allowed".into());
     }
 
-    let email = match crate::google_auth::auth(&req.credential, &cfg.granted_emails).await {
+    let email = match google_auth.auth(&req.credential, &cfg.granted_emails).await {
         Ok(email) => email,
         Err(e) => {
             error!("{}", e);

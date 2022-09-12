@@ -1,3 +1,4 @@
+use crate::google_auth::GoogleAuth;
 use log::info;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use warp::{serve, Filter, Future};
@@ -17,6 +18,7 @@ fn login_route(
         .and(warp::body::content_length_limit(1024 * 8))
         .and(warp::body::form::<LoginRequest>())
         .and(warp::any().map(move || cfg.to_owned()))
+        .and(warp::any().map(move || GoogleAuth::new()))
         .then(login)
 }
 

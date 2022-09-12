@@ -1,4 +1,3 @@
-mod cache;
 mod cert;
 mod google_auth;
 mod token;

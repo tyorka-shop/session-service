@@ -183,6 +183,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ec8a7b6a70fde80372154c65702f00a0f56f3e1c36abbc6c440484be248856db"
 
 [[package]]
+name = "cache"
+version = "0.1.0"
+source = "git+https://github.com/tyorka-shop/cache.git#f1b0dd2ad407e39f5d8ebd7ba6ad95c974ea130f"
+dependencies = [
+ "env_logger 0.9.0",
+ "lazy_static",
+ "log",
+ "serde",
+ "serde_json",
+ "time 0.3.14",
+]
+
+[[package]]
 name = "cc"
 version = "1.0.73"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -333,7 +346,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "44533bbbb3bb3c1fa17d9f2e4e38bbbaf8396ba82193c4cb1b6445d711445d36"
 dependencies = [
  "atty",
- "humantime",
+ "humantime 1.3.0",
+ "log",
+ "regex",
+ "termcolor",
+]
+
+[[package]]
+name = "env_logger"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b2cf0344971ee6c64c31be0d530793fba457d322dfec2810c453d0ef228f9c3"
+dependencies = [
+ "atty",
+ "humantime 2.1.0",
  "log",
  "regex",
  "termcolor",
@@ -566,6 +592,12 @@ checksum = "df004cfca50ef23c36850aaaa59ad52cc70d0e90243c3c7737a4dd32dc7a3c4f"
 dependencies = [
  "quick-error",
 ]
+
+[[package]]
+name = "humantime"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
 
 [[package]]
 name = "hyper"
@@ -1352,9 +1384,10 @@ dependencies = [
 name = "session-service"
 version = "0.1.0"
 dependencies = [
+ "cache",
  "config",
  "cookie",
- "env_logger",
+ "env_logger 0.7.1",
  "jsonwebtoken",
  "lazy_static",
  "log",
@@ -1373,9 +1406,9 @@ dependencies = [
 [[package]]
 name = "session_service_grpc"
 version = "0.1.0"
-source = "git+https://github.com/tyorka-shop/session-service-grpc.git#178b309c29de1dde7b9ab9c16c2d38764222aefd"
+source = "git+https://github.com/tyorka-shop/session-service-grpc.git#e0fe6fb00b84afd742e807c6be9f597f9d9d3766"
 dependencies = [
- "env_logger",
+ "env_logger 0.7.1",
  "log",
  "prost",
  "tokio",

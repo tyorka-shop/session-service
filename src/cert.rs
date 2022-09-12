@@ -1,3 +1,4 @@
+use cache::Cache;
 use regex::Regex;
 use reqwest::{get, header::CACHE_CONTROL, Response};
 use serde::{Deserialize, Serialize};
@@ -45,41 +46,49 @@ impl From<reqwest::Error> for CertificateError {
     }
 }
 
-fn get_max_age(resp: &Response) -> Option<i64> {
-    let cache_control = match resp.headers().get(CACHE_CONTROL) {
-        Some(cache_control) => cache_control.to_str().unwrap().to_string(),
-        None => return None,
-    };
+#[derive(Debug, Clone)]
+pub struct CertsCache(Cache);
 
-    Regex::new(r"max-age=(\d+)")
-        .unwrap()
-        .captures(&cache_control)
-        .map(|caps| caps.get(1).unwrap().as_str().parse::<i64>().unwrap())
-}
+impl CertsCache {
 
-pub async fn download_certs(kid: &str) -> Result<Cert, CertificateError> {
-    match crate::cache::get(kid) {
-        Some(cert) => {
-            Ok(cert)
-        }
-        None => {
-            dbg!("Downloading certificates");
+    pub fn new() -> Self {
+        CertsCache(Cache::new("certificate"))
+    }
 
-            let resp = get("https://www.googleapis.com/oauth2/v3/certs").await?;
+    fn get_max_age(resp: &Response) -> Option<i64> {
+        let cache_control = match resp.headers().get(CACHE_CONTROL) {
+            Some(cache_control) => cache_control.to_str().unwrap().to_string(),
+            None => return None,
+        };
 
-            let cache_ttl = get_max_age(&resp).unwrap_or(3600_i64);
+        Regex::new(r"max-age=(\d+)")
+            .unwrap()
+            .captures(&cache_control)
+            .map(|caps| caps.get(1).unwrap().as_str().parse::<i64>().unwrap())
+    }
 
-            let cert = resp
-                .json::<Certs>()
-                .await?
-                .keys
-                .into_iter()
-                .find(|cert| cert.kid == kid)
-                .ok_or(CertificateError::NotFound)?;
+    pub async fn download_certs(self: &Self, kid: &str) -> Result<Cert, CertificateError> {
+        match self.0.get(&kid) {
+            Some(cert) => Ok(cert),
+            None => {
+                dbg!("Downloading certificates");
 
-            crate::cache::insert(&kid, &cert, cache_ttl);
+                let resp = get("https://www.googleapis.com/oauth2/v3/certs").await?;
 
-            Ok(cert)
+                let cache_ttl = Self::get_max_age(&resp).unwrap_or(3600_i64);
+
+                let cert = resp
+                    .json::<Certs>()
+                    .await?
+                    .keys
+                    .into_iter()
+                    .find(|cert| cert.kid == kid)
+                    .ok_or(CertificateError::NotFound)?;
+
+                self.0.insert(&kid, &cert, cache_ttl);
+
+                Ok(cert)
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-use crate::cert::download_certs;
+use crate::cert::CertsCache;
 use crate::token::Claims;
 use jsonwebtoken::{decode, decode_header, errors::ErrorKind, Algorithm, DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
@@ -41,33 +41,46 @@ impl fmt::Display for GoogleAuthError {
     }
 }
 
-pub async fn auth(token: &str, granted_emails: &Vec<String>) -> Result<String, GoogleAuthError> {
-    let key = get_decoding_key(&token).await?;
+#[derive(Clone)]
+pub struct GoogleAuth(CertsCache);
 
-    match decode::<Claims>(&token, &key, &Validation::new(Algorithm::RS256)) {
-        Ok(decoded) => {
-            if !granted_emails.contains(&decoded.claims.email) {
-                error!("Not grunted {}", decoded.claims.email);
-                return Err(GoogleAuthError::NotGranted);
-            }
-
-            Ok(decoded.claims.email)
-        }
-        Err(e) => match e.kind() {
-            ErrorKind::ExpiredSignature => Err(GoogleAuthError::ExpiredToken),
-            _ => Err(GoogleAuthError::InvalidToken),
-        },
+impl GoogleAuth {
+    pub fn new() -> Self {
+        Self(CertsCache::new())
     }
-}
 
-async fn get_decoding_key<'a>(token: &'a str) -> Result<DecodingKey<'a>, GoogleAuthError> {
-    let payload = decode_header(token).map_err(|_| GoogleAuthError::InvalidToken)?;
+    pub async fn auth(
+        self: &Self,
+        token: &str,
+        granted_emails: &Vec<String>,
+    ) -> Result<String, GoogleAuthError> {
+        let key = self.get_decoding_key(&token).await?;
 
-    let kid = payload.kid.ok_or(GoogleAuthError::KidNotFound)?;
+        match decode::<Claims>(&token, &key, &Validation::new(Algorithm::RS256)) {
+            Ok(decoded) => {
+                if !granted_emails.contains(&decoded.claims.email) {
+                    error!("Not grunted {}", decoded.claims.email);
+                    return Err(GoogleAuthError::NotGranted);
+                }
 
-    let cert = download_certs(&kid)
-        .await
-        .map_err(|_| GoogleAuthError::DownloadCerts)?;
+                Ok(decoded.claims.email)
+            }
+            Err(e) => match e.kind() {
+                ErrorKind::ExpiredSignature => Err(GoogleAuthError::ExpiredToken),
+                _ => Err(GoogleAuthError::InvalidToken),
+            },
+        }
+    }
 
-    Ok(DecodingKey::from_rsa_components(&cert.n, &cert.e).into_static())
+    async fn get_decoding_key<'a>(self: &Self,token: &'a str) -> Result<DecodingKey<'a>, GoogleAuthError> {
+        let payload = decode_header(token).map_err(|_| GoogleAuthError::InvalidToken)?;
+
+        let kid = payload.kid.ok_or(GoogleAuthError::KidNotFound)?;
+
+        let cert = self.0.download_certs(&kid)
+            .await
+            .map_err(|_| GoogleAuthError::DownloadCerts)?;
+
+        Ok(DecodingKey::from_rsa_components(&cert.n, &cert.e).into_static())
+    }
 }
